@@ -31,8 +31,58 @@ public struct BackupService: Sendable {
         try prune()
     }
 
-    /// Vorhandene Sicherungen, neueste zuerst.
+    /// Vorhandene Tagessicherungen, neueste zuerst.
+    ///
+    /// Die Kopien vor einem Import gehoeren nicht dazu: Sie haben ihre eigene
+    /// Rotation, und beim Wiederherstellen nach einem Lesefehler waere ein
+    /// Stand von vor dem Import der falsche.
     public func availableBackups() -> [URL] {
+        backupFiles()
+            .filter { !$0.lastPathComponent.hasPrefix(Self.preImportPrefix) }
+    }
+
+    private func prune() throws {
+        for url in availableBackups().dropFirst(Self.keepCount) {
+            try? fileManager.removeItem(at: url)
+        }
+    }
+
+    // MARK: - Kopie vor dem Import
+
+    public static let preImportKeepCount = 10
+    static let preImportPrefix = "dashboard-vor-import-"
+
+    /// Kopiert den aktuellen Stand immer - auch wenn es heute schon eine
+    /// Tagessicherung gibt. Gibt die Kopie zurueck, oder `nil`, wenn es noch
+    /// keine Datendatei gibt.
+    @discardableResult
+    public func makePreImportBackup(now: Date = Date()) throws -> URL? {
+        guard fileManager.fileExists(atPath: location.file.path) else { return nil }
+        try location.ensureDirectories()
+
+        let base = "\(Self.preImportPrefix)\(Self.stamp(now, withTime: true))"
+        var target = location.backupDirectory.appendingPathComponent("\(base).json")
+        var counter = 2
+        while fileManager.fileExists(atPath: target.path) {
+            target = location.backupDirectory.appendingPathComponent("\(base)-\(counter).json")
+            counter += 1
+        }
+
+        try fileManager.copyItem(at: location.file, to: target)
+        StoreLocation.restrictToOwner(target)
+
+        for url in preImportBackups().dropFirst(Self.preImportKeepCount) {
+            try? fileManager.removeItem(at: url)
+        }
+        return target
+    }
+
+    /// Vorhandene Kopien vor einem Import, neueste zuerst.
+    public func preImportBackups() -> [URL] {
+        backupFiles().filter { $0.lastPathComponent.hasPrefix(Self.preImportPrefix) }
+    }
+
+    private func backupFiles() -> [URL] {
         let contents = (try? fileManager.contentsOfDirectory(
             at: location.backupDirectory,
             includingPropertiesForKeys: nil
@@ -40,12 +90,6 @@ public struct BackupService: Sendable {
         return contents
             .filter { $0.lastPathComponent.hasPrefix("dashboard-") && $0.pathExtension == "json" }
             .sorted { $0.lastPathComponent > $1.lastPathComponent }
-    }
-
-    private func prune() throws {
-        for url in availableBackups().dropFirst(Self.keepCount) {
-            try? fileManager.removeItem(at: url)
-        }
     }
 
     /// Legt eine beschaedigte Datei beiseite, statt sie zu ueberschreiben.

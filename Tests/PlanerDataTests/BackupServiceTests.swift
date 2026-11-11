@@ -72,4 +72,41 @@ struct BackupServiceTests {
         #expect(!FileManager.default.fileExists(atPath: location.file.path))
         #expect(FileManager.default.fileExists(atPath: moved?.path ?? ""))
     }
+
+    // MARK: - Kopie vor dem Import
+
+    /// Auch wenn es die Tagessicherung schon gibt, entsteht eine neue Kopie.
+    @Test func preImportBackupIsAlwaysMade() throws {
+        let location = try makeLocation()
+        let service = BackupService(location: location)
+        let now = date("2026-09-04")
+
+        try service.makeDailyBackup(now: now)
+        let first = try service.makePreImportBackup(now: now)
+        let second = try service.makePreImportBackup(now: now)
+
+        #expect(first?.lastPathComponent.hasPrefix("dashboard-vor-import-2026-09-04-") == true)
+        #expect(first != second, "Zwei Importe in derselben Sekunde ueberschreiben sich nicht")
+        #expect(service.preImportBackups().count == 2)
+    }
+
+    /// Die Kopien vor dem Import zaehlen nicht zur taeglichen Rotation - sie
+    /// verdraengen keine Tagessicherung und werden von ihr nicht geloescht.
+    @Test func preImportBackupsStayOutOfTheDailyRotation() throws {
+        let location = try makeLocation()
+        let service = BackupService(location: location)
+
+        let copy = try service.makePreImportBackup(now: date("2026-09-01"))
+        for offset in 0..<20 {
+            let stamp = Calendar(identifier: .gregorian)
+                .date(byAdding: .day, value: offset, to: date("2026-09-01")) ?? Date()
+            try service.makeDailyBackup(now: stamp)
+        }
+
+        #expect(service.availableBackups().count == BackupService.keepCount)
+        #expect(service.availableBackups().allSatisfy {
+            !$0.lastPathComponent.hasPrefix("dashboard-vor-import-")
+        })
+        #expect(FileManager.default.fileExists(atPath: copy?.path ?? ""))
+    }
 }

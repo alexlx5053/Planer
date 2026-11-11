@@ -499,9 +499,11 @@ public final class StateStore {
         case fileTooLarge
         case notABackup
         case newerVersion
+        case backupFailed
 
         public var errorDescription: String? {
             switch self {
+            case .backupFailed: "Der bisherige Stand ließ sich nicht sichern. Es wurde nichts ersetzt."
             case .fileTooLarge: "Die Datei ist zu groß, um eine Planer-Sicherung zu sein."
             case .notABackup: "Das ist keine Planer-Sicherung."
             case .newerVersion: "Die Sicherung stammt aus einer neueren Fassung des Planers."
@@ -564,6 +566,11 @@ public final class StateStore {
         let document = try StoredDocument.decoder.decode(StoredDocument.self, from: data)
 
         flush()
+        // Die Tagessicherung gibt es heute womoeglich schon - sie enthielte
+        // dann nicht, was seither geaendert wurde. Deshalb immer eine eigene
+        // Kopie. Gelingt sie nicht, wird nicht importiert.
+        guard !hasUnsavedChanges else { throw ImportError.backupFailed }
+        try backups.makePreImportBackup()
         try? backups.makeDailyBackup()
 
         state = document.state

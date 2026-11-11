@@ -85,4 +85,53 @@ struct ImportTests {
         #expect(store.loadOutcome == .ok)
         #expect(store.state == DashboardState())
     }
+
+    // MARK: - Sicherung vor dem Import
+
+    /// Alle Sicherungsdateien samt Inhalt.
+    private func backupContents(_ location: StoreLocation) throws -> [(URL, StoredDocument)] {
+        try FileManager.default
+            .contentsOfDirectory(at: location.backupDirectory, includingPropertiesForKeys: nil)
+            .compactMap { url in
+                guard let data = try? Data(contentsOf: url),
+                      let document = try? StoredDocument.decoder.decode(StoredDocument.self, from: data)
+                else { return nil }
+                return (url, document)
+            }
+    }
+
+    /// Die Tagessicherung gibt es heute schon. Was danach geaendert wurde, muss
+    /// trotzdem in einer Kopie vor dem Import landen.
+    @Test func changesSinceTheDailyBackupAreSavedBeforeImport() throws {
+        let location = try temporaryLocation()
+        defer { try? FileManager.default.removeItem(at: location.directory) }
+
+        let first = StateStore(location: location, today: today)
+        first.add(task: TaskItem(title: "Vor dem Start", startDate: today))
+        first.flush()
+
+        // Zweiter Start: legt die heutige Tagessicherung an.
+        let store = StateStore(location: location, today: today)
+        #expect(BackupService(location: location).availableBackups().count == 1)
+
+        store.add(task: TaskItem(title: "Nach dem Start", startDate: today))
+
+        let other = StateStore(inMemory: DashboardState(), today: today)
+        other.add(task: TaskItem(title: "Importiert", startDate: today))
+        let export = location.directory.appendingPathComponent("export.json")
+        try other.export(to: export)
+
+        try store.importFrom(export)
+        #expect(store.state.tasks.map(\.title) == ["Importiert"])
+
+        let saved = try backupContents(location).filter { _, document in
+            document.state.tasks.map(\.title).contains("Nach dem Start")
+        }
+        #expect(saved.count == 1)
+        if let (url, _) = saved.first {
+            #expect(url.lastPathComponent.hasPrefix("dashboard-vor-import-"))
+            let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
+            #expect((attributes[.posixPermissions] as? NSNumber)?.intValue == 0o600)
+        }
+    }
 }

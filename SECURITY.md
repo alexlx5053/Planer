@@ -15,7 +15,7 @@
 Zwei Stellen nehmen Inhalte von außen entgegen:
 
 - **Eingefügter Text** („Aus Text anlegen"). Er wird gelesen, nie ausgeführt. Die Länge ist begrenzt. Was das Sprachmodell zurückgibt, wird nur als JSON gelesen und gegen den eingefügten Text geprüft: Ein Eintrag, dessen Titel dort nicht vorkommt, wird verworfen, und das Modell kann weder ein Datum setzen noch eines verschieben. Nichts wird ohne Bestätigung angelegt.
-- **Zurückgespielte Sicherung** (Einstellungen → „Zurückspielen"). Die Datei wird nur als JSON in das feste Datenmodell gelesen; unbekannte Felder werden übergangen, übergroße Dateien abgelehnt. Vor dem Ersetzen entsteht eine Sicherung des bisherigen Stands.
+- **Zurückgespielte Sicherung** (Einstellungen → „Zurückspielen"). Die Datei wird nur als JSON in das feste Datenmodell gelesen; unbekannte Felder werden übergangen, übergroße Dateien abgelehnt. Vor dem Ersetzen entsteht immer eine eigene Kopie des bisherigen Stands mit Uhrzeit (`Backups/dashboard-vor-import-…`, die letzten 10 bleiben), unabhängig von der Tagessicherung. Gelingt diese Kopie nicht, wird nichts ersetzt.
 
 ## Was die App nicht leistet
 
