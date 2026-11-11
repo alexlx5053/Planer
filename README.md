@@ -84,8 +84,8 @@ Mehr dazu in [SECURITY.md](SECURITY.md).
 - **Swift 6 und SwiftUI**, als reines Swift-Paket ohne Xcode-Projekt; gebaut wird mit den Command Line Tools.
 - **Apple Foundation Models** für das Sprachmodell auf dem Gerät, mit Rückfall auf die Regeln, wenn es nicht verfügbar ist.
 - **Keine fremden Bibliotheken.** Nur Apples eigene Frameworks.
-- **238 automatische Tests** (Swift Testing) für Logik, Speichern, Sicherungen und Texterkennung.
-- **Rund 11 500 Zeilen Swift**, aufgeteilt in drei Schichten:
+- **255 automatische Tests** (Swift Testing) für Logik, Speichern, Sicherungen und Texterkennung.
+- **Rund 11 800 Zeilen Swift**, aufgeteilt in drei Schichten:
 
 ```
 Sources/
@@ -106,7 +106,7 @@ Voraussetzungen: macOS 14 oder neuer und die Command Line Tools (`xcode-select -
 ./Scripts/install.sh
 ```
 
-Das baut die App, signiert sie lokal und legt sie nach `/Applications/Planer.app`.
+Das baut die App, signiert sie lokal und legt sie nach `/Applications/Planer.app`. Liegt dort schon eine andere App gleichen Namens, bricht das Skript ab, statt sie zu ersetzen.
 
 Nur bauen, ohne zu installieren:
 
