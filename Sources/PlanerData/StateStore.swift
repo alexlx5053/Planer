@@ -600,6 +600,9 @@ public final class StateStore {
         guard size <= Self.importSizeLimit else { throw ImportError.fileTooLarge }
 
         let data = try Data(contentsOf: url)
+        // Laesst sich die Groesse vorher nicht ermitteln, greift die Pruefung
+        // oben nicht - deshalb hier noch einmal am tatsaechlich Gelesenen.
+        guard data.count <= Self.importSizeLimit else { throw ImportError.fileTooLarge }
 
         guard let header = try? StoredDocument.decoder.decode(ImportHeader.self, from: data),
               header.hasState
