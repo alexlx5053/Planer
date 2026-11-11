@@ -89,7 +89,9 @@ public struct BackupService: Sendable {
         )) ?? []
         return contents
             .filter { $0.lastPathComponent.hasPrefix("dashboard-") && $0.pathExtension == "json" }
-            .sorted { $0.lastPathComponent > $1.lastPathComponent }
+            // Ohne Endung vergleichen: Sonst saehe "...-153000-2.json" aelter
+            // aus als "...-153000.json", weil "-" vor "." sortiert.
+            .sorted { $0.deletingPathExtension().lastPathComponent > $1.deletingPathExtension().lastPathComponent }
     }
 
     /// Legt eine beschaedigte Datei beiseite, statt sie zu ueberschreiben.

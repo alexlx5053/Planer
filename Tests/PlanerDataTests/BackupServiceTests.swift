@@ -88,6 +88,8 @@ struct BackupServiceTests {
         #expect(first?.lastPathComponent.hasPrefix("dashboard-vor-import-2026-09-04-") == true)
         #expect(first != second, "Zwei Importe in derselben Sekunde ueberschreiben sich nicht")
         #expect(service.preImportBackups().count == 2)
+        #expect(service.preImportBackups().first?.lastPathComponent == second?.lastPathComponent,
+                "Die zuletzt angelegte Kopie steht vorne")
     }
 
     /// Die Kopien vor dem Import zaehlen nicht zur taeglichen Rotation - sie
