@@ -46,6 +46,27 @@ struct StorageNoticeTests {
         #expect(message.contains(quarantined))
     }
 
+    /// Gibt es keine Tagessicherung, aber eine Kopie von vor einem Import,
+    /// ist die besser als ein leerer Planer.
+    @Test func fallsBackToPreImportCopy() throws {
+        let location = try temporaryLocation()
+        defer { try? FileManager.default.removeItem(at: location.directory) }
+        let first = StateStore(location: location, today: today)
+        first.add(task: TaskItem(title: "Beispiel", startDate: today))
+        first.flush()
+        try BackupService(location: location).makePreImportBackup()
+        #expect(BackupService(location: location).availableBackups().isEmpty)
+        try Data("kaputt".utf8).write(to: location.file)
+
+        let store = StateStore(location: location, today: today)
+        #expect(store.state.tasks.map(\.title) == ["Beispiel"])
+        guard case .recoveredFromBackup(let backup, _) = store.loadOutcome else {
+            Issue.record("Erwartet: Wiederherstellung, war \(store.loadOutcome)")
+            return
+        }
+        #expect(backup.hasPrefix("dashboard-vor-import-"))
+    }
+
     @Test func emptyStartNamesSetAsideFile() throws {
         let location = try temporaryLocation()
         defer { try? FileManager.default.removeItem(at: location.directory) }

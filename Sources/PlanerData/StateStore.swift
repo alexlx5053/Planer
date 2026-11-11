@@ -141,7 +141,9 @@ public final class StateStore {
         // juengste lesbare Sicherung suchen.
         let quarantined = backups.quarantineCorruptFile()?.lastPathComponent
 
-        for backup in backups.availableBackups() {
+        // Tagessicherungen zuerst; die Kopien von vor einem Import sind aelter
+        // als der Import, aber immer noch besser als ein leerer Planer.
+        for backup in backups.availableBackups() + backups.preImportBackups() {
             if let document = decodeDocument(at: backup) {
                 state = document.state
                 loadOutcome = .recoveredFromBackup(
