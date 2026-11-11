@@ -91,8 +91,11 @@ private final class HolidayCache: @unchecked Sendable {
 
         if let year = byYear[day.year] { return year[day] }
 
+        // Zwei Feiertage koennen auf denselben Tag fallen (2008: Tag der
+        // Arbeit und Christi Himmelfahrt) - dann werden die Namen verbunden.
         let table = Dictionary(
-            uniqueKeysWithValues: Holidays.inBavaria(year: day.year).map { ($0.day, $0.name) }
+            Holidays.inBavaria(year: day.year).map { ($0.day, $0.name) },
+            uniquingKeysWith: { first, second in "\(first) · \(second)" }
         )
         byYear[day.year] = table
         return table[day]

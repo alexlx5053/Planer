@@ -68,4 +68,19 @@ struct HolidayTests {
         #expect(Holidays.name(on: day("2026-04-21")) == nil)
         #expect(Holidays.name(on: day("2026-04-06")) == "Ostermontag")
     }
+
+    /// 2008 fielen Tag der Arbeit und Christi Himmelfahrt auf denselben Tag
+    /// (Ostern 23.3. + 39 Tage). Beide Namen muessen erscheinen.
+    @Test func coincidingHolidaysAreMerged() {
+        let name = Holidays.name(on: day("2008-05-01"))
+        #expect(name?.contains("Tag der Arbeit") == true)
+        #expect(name?.contains("Christi Himmelfahrt") == true)
+    }
+
+    /// Kein Jahr darf beim Aufbau der Feiertagstabelle abstuerzen.
+    @Test func everyYearFrom1900To2400() {
+        for year in 1900...2400 {
+            _ = Holidays.name(on: DateKey(year: year, month: 1, day: 1))
+        }
+    }
 }
