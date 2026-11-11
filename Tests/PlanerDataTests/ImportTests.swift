@@ -28,6 +28,8 @@ struct ImportTests {
     @Test("Fremdes JSON wird abgelehnt", arguments: [
         "{}",
         #"{"name":"x"}"#,
+        #"{"state":null}"#,
+        #"{"schemaVersion":1,"state":null}"#,
     ])
     func foreignJSONIsRejected(raw: String) throws {
         let location = try temporaryLocation()

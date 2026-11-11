@@ -570,7 +570,8 @@ public final class StateStore {
 
         init(from decoder: Decoder) throws {
             let c = try decoder.container(keyedBy: CodingKeys.self)
-            hasState = c.contains(.state)
+            // `"state": null` wuerde sonst ebenfalls zum leeren Planer.
+            hasState = c.contains(.state) && !((try? c.decodeNil(forKey: .state)) ?? true)
             schemaVersion = (try? c.decodeIfPresent(Int.self, forKey: .schemaVersion)) ?? 1
         }
     }
