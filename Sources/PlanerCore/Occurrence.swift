@@ -52,3 +52,17 @@ public extension Recurring {
         return nil
     }
 }
+
+public extension Recurrence {
+
+    /// Die Wochentage, die beim Speichern eines Eintrags abgelegt werden.
+    ///
+    /// `occurs` liest leere Wochentage bei `weekly` als "jeden Tag" - das bleibt
+    /// so, damit bestehende Dateien sich nicht aendern. Neu gespeichert wird
+    /// "woechentlich" ohne angehakten Tag aber nicht mehr: Dann gilt der
+    /// Wochentag des Startdatums.
+    func weekdaysToSave(_ selection: Set<Int>, startingOn start: DateKey) -> Set<Int> {
+        guard self == .weekly else { return [] }
+        return selection.isEmpty ? [start.weekdayIndex] : selection
+    }
+}

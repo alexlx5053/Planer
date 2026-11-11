@@ -190,6 +190,12 @@ struct EditorSheet: View {
                     if new == .quarterly && months.isEmpty {
                         months = TaskItem.defaultQuarterMonths
                     }
+                    // Nur beim Umschalten durch den Nutzer, nicht beim Laden:
+                    // Ein aelterer Eintrag ohne Wochentage soll durch blosses
+                    // Oeffnen nicht als geaendert gelten.
+                    if new == .weekly && weekdays.isEmpty && initialSignature != nil {
+                        weekdays = [date.weekdayIndex]
+                    }
                 }
             }
             }
@@ -444,7 +450,7 @@ struct EditorSheet: View {
         item.title = title
         item.startDate = date
         item.recurrence = recurrence
-        item.weekdays = recurrence == .weekly ? weekdays : []
+        item.weekdays = recurrence.weekdaysToSave(weekdays, startingOn: date)
         item.months = (recurrence == .monthly || recurrence == .quarterly) ? months : []
         item.priority = priority
     }
@@ -453,7 +459,7 @@ struct EditorSheet: View {
         item.title = title
         item.startDate = date
         item.recurrence = recurrence
-        item.weekdays = recurrence == .weekly ? weekdays : []
+        item.weekdays = recurrence.weekdaysToSave(weekdays, startingOn: date)
         item.months = (recurrence == .monthly || recurrence == .quarterly) ? months : []
         item.colorKey = colorKey
         item.notes = notes

@@ -143,4 +143,27 @@ struct OccurrenceTests {
         #expect(event.occurs(on: day("2026-09-10")))  // Donnerstag
         #expect(!event.occurs(on: day("2026-09-09"))) // Mittwoch
     }
+
+    // MARK: - Speichern aus dem Editor
+
+    /// "Woechentlich" ohne angehakten Tag darf nicht als "taeglich" enden: Dann
+    /// gilt der Wochentag des Startdatums.
+    @Test func weeklyWithoutWeekdaysTakesTheStartDay() {
+        let start = day("2026-09-04") // Freitag
+        let saved = Recurrence.weekly.weekdaysToSave([], startingOn: start)
+        #expect(saved == [5])
+
+        let item = task(.weekly, from: "2026-09-04", weekdays: saved)
+        #expect(item.occurs(on: day("2026-09-11")))
+        #expect(!item.occurs(on: day("2026-09-05")))
+    }
+
+    @Test func chosenWeekdaysAreKept() {
+        #expect(Recurrence.weekly.weekdaysToSave([1, 3], startingOn: day("2026-09-04")) == [1, 3])
+    }
+
+    @Test func otherRecurrencesSaveNoWeekdays() {
+        #expect(Recurrence.daily.weekdaysToSave([1, 3], startingOn: day("2026-09-04")).isEmpty)
+        #expect(Recurrence.none.weekdaysToSave([], startingOn: day("2026-09-04")).isEmpty)
+    }
 }
