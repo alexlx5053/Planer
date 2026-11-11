@@ -18,5 +18,14 @@ shift
 swift build --scratch-path "$BUILD_CACHE" >/dev/null
 BIN="$(swift build --scratch-path "$BUILD_CACHE" --show-bin-path)/Planer"
 
-rm -rf "$TARGET"
+# Nur alte Bilder ersetzen, nie einen Ordner mit anderem Inhalt leeren:
+# Ein vertippter Zielordner wie "." oder "docs" darf nichts loeschen.
+if [[ -e "$TARGET" ]]; then
+    [[ -d "$TARGET" ]] || { echo "Kein Ordner: $TARGET" >&2; exit 1; }
+    if find "$TARGET" -mindepth 1 \( -type d -o \( -type f -not -name '*.png' \) \) -print -quit | grep -q .; then
+        echo "Abbruch: $TARGET enthaelt mehr als Bilder. Bitte einen leeren oder neuen Ordner angeben." >&2
+        exit 1
+    fi
+    find "$TARGET" -mindepth 1 -maxdepth 1 -type f -name '*.png' -delete
+fi
 "$BIN" --snapshot "$TARGET" "$@"
