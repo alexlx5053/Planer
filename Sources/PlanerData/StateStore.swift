@@ -495,11 +495,36 @@ public final class StateStore {
     /// 20 MB - weit ueber allem, was ein jahrelang gefuehrter Planer erreicht.
     static let importSizeLimit = 20 * 1024 * 1024
 
-    public enum ImportError: LocalizedError {
+    public enum ImportError: LocalizedError, Equatable {
         case fileTooLarge
+        case notABackup
+        case newerVersion
 
         public var errorDescription: String? {
-            "Die Datei ist zu groß, um eine Planer-Sicherung zu sein."
+            switch self {
+            case .fileTooLarge: "Die Datei ist zu groß, um eine Planer-Sicherung zu sein."
+            case .notABackup: "Das ist keine Planer-Sicherung."
+            case .newerVersion: "Die Sicherung stammt aus einer neueren Fassung des Planers."
+            }
+        }
+    }
+
+    /// Nur die Kopfdaten einer Datei - um vor dem Import festzustellen, ob sie
+    /// ueberhaupt eine Planer-Sicherung ist.
+    ///
+    /// `StoredDocument` selbst ist bewusst nachsichtig und macht aus jedem
+    /// JSON-Objekt einen leeren Planer. Beim Laden der eigenen Datei ist das
+    /// richtig, beim Import wuerde es den Bestand durch nichts ersetzen.
+    private struct ImportHeader: Decodable {
+        let hasState: Bool
+        let schemaVersion: Int
+
+        private enum CodingKeys: String, CodingKey { case schemaVersion, state }
+
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            hasState = c.contains(.state)
+            schemaVersion = (try? c.decodeIfPresent(Int.self, forKey: .schemaVersion)) ?? 1
         }
     }
 
@@ -528,6 +553,14 @@ public final class StateStore {
         guard size <= Self.importSizeLimit else { throw ImportError.fileTooLarge }
 
         let data = try Data(contentsOf: url)
+
+        guard let header = try? StoredDocument.decoder.decode(ImportHeader.self, from: data),
+              header.hasState
+        else { throw ImportError.notABackup }
+        guard header.schemaVersion <= StoredDocument.currentSchemaVersion else {
+            throw ImportError.newerVersion
+        }
+
         let document = try StoredDocument.decoder.decode(StoredDocument.self, from: data)
 
         flush()
