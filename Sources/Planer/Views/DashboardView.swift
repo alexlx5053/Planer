@@ -1,5 +1,6 @@
 import PlanerCore
 import PlanerData
+import AppKit
 import SwiftUI
 
 /// Die Tagesansicht - der Bildschirm, den man jeden Morgen oeffnet.
@@ -53,6 +54,7 @@ struct DashboardView: View {
         .contentShape(Rectangle())
         .onTapGesture { model.isEditingNotes = false }
         .overlay(alignment: .bottom) { undoToast }
+        .overlay(alignment: .top) { storageNotice }
         .onChange(of: model.selectedDate) { _, _ in model.isEditingNotes = false }
         .onChange(of: model.viewMode) { _, _ in model.isEditingNotes = false }
         .onChange(of: model.editorTarget) { _, target in
@@ -606,6 +608,66 @@ struct DashboardView: View {
             .animation(Motion.smooth(reduced: reduceMotion), value: agenda.habits)
         }
         .addOnTap { model.newEntry(kind: .habit) }
+    }
+
+    // MARK: - Hinweise zum Speicher
+
+    /// Gescheitertes Speichern hat Vorrang: Es betrifft, was gerade passiert.
+    /// Der Hinweis verschwindet von allein, sobald ein neuer Versuch gelingt.
+    @ViewBuilder
+    private var storageNotice: some View {
+        if store.saveFailure != nil {
+            noticeCapsule(
+                icon: "exclamationmark.triangle",
+                text: "Speichern gerade nicht möglich – neuer Versuch läuft. Deine Änderungen bleiben erhalten, solange der Planer geöffnet ist."
+            ) {
+                EmptyView()
+            }
+        } else if model.showsLoadNotice, let message = store.loadOutcome.message {
+            noticeCapsule(icon: "exclamationmark.triangle", text: message) {
+                Button("Im Finder zeigen") {
+                    NSWorkspace.shared.activateFileViewerSelecting([store.storageDirectory])
+                }
+                .buttonStyle(.plain)
+                .font(Typo.caption.weight(.medium))
+                .foregroundStyle(Palette.accent)
+                .expandedHitArea(6)
+
+                Button {
+                    model.showsLoadNotice = false
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(Palette.textTertiary)
+                }
+                .buttonStyle(.plain)
+                .expandedHitArea(8)
+            }
+        }
+    }
+
+    private func noticeCapsule<Actions: View>(
+        icon: String,
+        text: String,
+        @ViewBuilder actions: () -> Actions
+    ) -> some View {
+        HStack(spacing: Metrics.spacing12) {
+            Image(systemName: icon)
+                .font(.system(size: 10))
+                .foregroundStyle(Palette.urgent)
+            Text(text)
+                .font(Typo.caption)
+                .foregroundStyle(Palette.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+            actions()
+        }
+        .padding(.horizontal, Metrics.spacing16)
+        .padding(.vertical, Metrics.spacing12)
+        .frame(maxWidth: 640)
+        .background(Palette.surfaceRaised, in: RoundedRectangle(cornerRadius: Metrics.cardRadius))
+        .overlay(RoundedRectangle(cornerRadius: Metrics.cardRadius).strokeBorder(Palette.border, lineWidth: 1))
+        .padding(.top, Metrics.spacing12)
+        .transition(.opacity)
     }
 
     // MARK: - Rueckholen

@@ -147,6 +147,11 @@ final class AppModel {
 
     var createdNotice: CreatedNotice?
 
+    /// Steht der Hinweis zum Laden noch da? Bis er weggeklickt wird - ein
+    /// Hinweis, dass aeltere Daten geladen wurden, soll nicht von allein
+    /// verschwinden.
+    var showsLoadNotice: Bool
+
     /// Wird gerade im kleinen Notizfeld der Seitenspalte geschrieben?
     ///
     /// Hier statt in der Ansicht, weil ein Klick irgendwo ins Fenster das
@@ -184,6 +189,7 @@ final class AppModel {
         let today = store.today
         self.selectedDate = today
         self.visibleMonth = today
+        self.showsLoadNotice = store.loadOutcome.message != nil
     }
 
     // MARK: - Navigation

@@ -46,6 +46,25 @@ public enum LoadOutcome: Sendable, Equatable {
     case recoveredFromBackup(backup: String, quarantined: String?)
     /// Datei war unlesbar und es gab keine brauchbare Sicherung.
     case startedEmpty(quarantined: String?)
+
+    /// Was der Nutzer erfahren soll, oder `nil`, wenn alles normal lief.
+    public var message: String? {
+        switch self {
+        case .ok:
+            return nil
+        case .recoveredFromBackup(let backup, let quarantined):
+            return "Die Datendatei war nicht lesbar. Geladen wurde die Sicherung „\(backup)“."
+                + Self.setAside(quarantined)
+        case .startedEmpty(let quarantined):
+            return "Die Datendatei war nicht lesbar, und es gab keine brauchbare Sicherung. Der Planer startet leer."
+                + Self.setAside(quarantined)
+        }
+    }
+
+    private static func setAside(_ name: String?) -> String {
+        guard let name else { return "" }
+        return " Die alte Datei liegt unverändert als „\(name)“ im Datenordner."
+    }
 }
 
 /// Haelt den App-Zustand, speichert ihn entprellt und beantwortet Auswertungen.
@@ -67,6 +86,16 @@ public final class StateStore {
     @ObservationIgnored private let cache = StatsCache()
     @ObservationIgnored private var saveTask: Task<Void, Never>?
     @ObservationIgnored private var hasUnsavedChanges = false
+    @ObservationIgnored private var retryTask: Task<Void, Never>?
+
+    /// Warum das letzte Speichern scheiterte, oder `nil`, wenn es gelang.
+    ///
+    /// Solange hier etwas steht, wird in Abstaenden erneut versucht - der
+    /// Zustand bleibt im Speicher, die Oberflaeche zeigt einen Hinweis.
+    public private(set) var saveFailure: String?
+
+    /// Wartezeit bis zum naechsten Versuch nach einem Schreibfehler.
+    var saveRetryDelay = Duration.seconds(5)
 
     /// Wartezeit vor dem Schreiben. Die Oberflaeche zeigt Aenderungen sofort,
     /// die Platte sieht sie gesammelt.
@@ -170,10 +199,26 @@ public final class StateStore {
             // Datei hat wieder die Standardrechte - also jedes Mal setzen.
             StoreLocation.restrictToOwner(location.file)
             hasUnsavedChanges = false
+            retryTask?.cancel()
+            retryTask = nil
+            if saveFailure != nil { saveFailure = nil }
         } catch {
-            // Beim naechsten Versuch erneut - der Zustand bleibt im Speicher
-            // erhalten, nichts geht verloren.
+            // Der Zustand bleibt im Speicher erhalten. Gemeldet wird der Fehler,
+            // und nach kurzer Zeit wird es erneut versucht - auch wenn bis
+            // dahin nichts mehr geaendert wird.
             hasUnsavedChanges = true
+            saveFailure = error.localizedDescription
+            scheduleRetry()
+        }
+    }
+
+    private func scheduleRetry() {
+        retryTask?.cancel()
+        let delay = saveRetryDelay
+        retryTask = Task { [weak self] in
+            try? await Task.sleep(for: delay)
+            guard !Task.isCancelled, let self, self.hasUnsavedChanges else { return }
+            self.persistNow()
         }
     }
 
