@@ -1,0 +1,24 @@
+# Bauergebnisse
+.build/
+build/
+*.app
+*.appex
+DerivedData/
+.swiftpm/
+
+# macOS
+.DS_Store
+._*
+
+# Persoenliche Daten - gehoeren niemals ins Repository
+dashboard*.json
+Planer *.json
+Backups/
+snapshots/
+*.local
+.env*
+
+# Werkzeuge
+.claude/
+.vscode/
+.idea/

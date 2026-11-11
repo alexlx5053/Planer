@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Ohne Sandbox registriert das System die Erweiterung nicht; das ist
+	     geprueft. Sie ist also nicht optional. -->
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+
+	<!-- Der uebliche Weg, Daten zwischen App und Widget zu teilen, ist eine
+	     App-Gruppe. Die setzt ein Apple-Developer-Konto voraus. Stattdessen
+	     bekommt das Widget lesenden Zugriff auf genau den einen Ordner, in dem
+	     die App ihre Datei fuehrt - nicht mehr. -->
+	<key>com.apple.security.temporary-exception.files.home-relative-path.read-only</key>
+	<array>
+		<string>/Library/Application Support/Planer/</string>
+	</array>
+</dict>
+</plist>
