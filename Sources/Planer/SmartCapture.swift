@@ -30,7 +30,8 @@ enum SmartCapture {
     }
 
     /// Laenger darf der Text fuer das Modell nicht sein - sein Fenster ist
-    /// klein. Die Regeln lesen in jedem Fall den ganzen Text.
+    /// klein. Die Regeln lesen mehr, aber auch nur bis zu ihrer eigenen
+    /// Grenze (`QuickParser.characterLimit`).
     private static let characterLimit = 3500
 
     private static let instructions = """
