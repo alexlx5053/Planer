@@ -13,7 +13,8 @@ cd "$ROOT"
 # Aus demselben Grund wie das App-Bundle: Der Projektordner liegt unter
 # ~/Documents und bekommt vom System laufend erweiterte Attribute angehaengt.
 # `codesign` - das SwiftPM auch fuer Test-Bundles aufruft - lehnt die ab.
-BUILD_CACHE="${TMPDIR:-/tmp}planer-bau"
+TMP_ROOT="${TMPDIR:-/tmp}"
+BUILD_CACHE="${TMP_ROOT%/}/planer-bau"
 mkdir -p "$BUILD_CACHE"
 
 source "$ROOT/Scripts/sdk.sh"

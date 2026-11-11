@@ -12,7 +12,8 @@ cd "$ROOT"
 # Aus demselben Grund wie das App-Bundle: Der Projektordner liegt unter
 # ~/Documents und bekommt vom System laufend erweiterte Attribute angehaengt.
 # `codesign` - das SwiftPM auch fuer Test-Bundles aufruft - lehnt die ab.
-BUILD_CACHE="${TMPDIR:-/tmp}planer-bau"
+TMP_ROOT="${TMPDIR:-/tmp}"
+BUILD_CACHE="${TMP_ROOT%/}/planer-bau"
 mkdir -p "$BUILD_CACHE"
 
 source "$ROOT/Scripts/sdk.sh"
@@ -32,7 +33,7 @@ EXECUTABLE="Planer"
 # "resource fork ... not allowed" rundweg ab, und sie lassen sich nicht
 # zuverlaessig entfernen, solange das System sie immer wieder anhaengt. Im
 # temporaeren Verzeichnis entstehen sie gar nicht erst.
-STAGE="${TMPDIR:-/tmp}planer-build"
+STAGE="${TMP_ROOT%/}/planer-build"
 APP="$STAGE/$APP_NAME.app"
 
 echo "==> Kompiliere ($CONFIG)"

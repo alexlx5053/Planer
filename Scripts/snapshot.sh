@@ -6,7 +6,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-BUILD_CACHE="${TMPDIR:-/tmp}planer-bau"
+TMP_ROOT="${TMPDIR:-/tmp}"
+BUILD_CACHE="${TMP_ROOT%/}/planer-bau"
 mkdir -p "$BUILD_CACHE"
 
 source "$ROOT/Scripts/sdk.sh"

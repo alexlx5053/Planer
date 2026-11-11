@@ -4,7 +4,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 "$ROOT/Scripts/build_app.sh" "$@"
 
-STAGE="${TMPDIR:-/tmp}planer-build"
+TMP_ROOT="${TMPDIR:-/tmp}"
+STAGE="${TMP_ROOT%/}/planer-build"
 TARGET="/Applications/Planer.app"
 
 echo "==> Installiere nach $TARGET"
