@@ -314,6 +314,10 @@ struct SettingsView: View {
         do {
             try store.importFrom(url)
             message = "Zurückgespielt aus \(url.lastPathComponent)."
+        } catch let error as StateStore.ImportError {
+            // Diese Meldungen sind schon vollstaendige Saetze - und nicht jede
+            // bedeutet, dass die Datei unlesbar war.
+            message = error.localizedDescription
         } catch {
             message = "Die Datei ließ sich nicht lesen: \(error.localizedDescription)"
         }
